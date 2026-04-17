@@ -1,0 +1,158 @@
+openapi: 3.1.0
+info:
+  title: Station Transfer Events API
+  version: 0.1.0
+  description: |
+    API for ingesting transfer events idempotently and retrieving station reconciliation summaries.
+servers:
+  - url: http://localhost/api/v0
+paths:
+  /transfers:
+    post:
+      summary: Ingest transfer events
+      operationId: ingestTransfers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - events
+              properties:
+                events:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/TransferEventInput'
+      responses:
+        '200':
+          description: Batch processed with partial acceptance semantics.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferIngestionResponse'
+        '400':
+          description: Top-level payload malformed or batch size exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /stations/{station_id}/summary:
+    get:
+      summary: Get reconciliation summary for a station
+      operationId: getStationSummary
+      parameters:
+        - in: path
+          name: station_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Summary found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationSummaryResponse'
+        '404':
+          description: No events stored for the station
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    TransferEventInput:
+      type: object
+      required:
+        - event_id
+        - station_id
+        - amount
+        - status
+        - created_at
+      properties:
+        event_id:
+          type: string
+          example: evt-100
+        station_id:
+          type: string
+          example: S1
+        amount:
+          type: number
+          format: double
+          minimum: 0
+          example: 125.50
+        status:
+          type: string
+          example: approved
+        created_at:
+          type: string
+          format: date-time
+          example: 2026-04-17T10:00:00Z
+    TransferIngestionResponse:
+      type: object
+      required:
+        - inserted
+        - duplicates
+        - invalid
+      properties:
+        inserted:
+          type: integer
+          example: 2
+        duplicates:
+          type: integer
+          example: 1
+        invalid:
+          type: integer
+          example: 1
+        validation_errors:
+          type: array
+          items:
+            type: object
+            required:
+              - index
+              - errors
+            properties:
+              index:
+                type: integer
+                example: 1
+              errors:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+    StationSummaryResponse:
+      type: object
+      required:
+        - station_id
+        - total_approved_amount
+        - approved_events_count
+        - events_count
+      properties:
+        station_id:
+          type: string
+          example: S1
+        total_approved_amount:
+          type: number
+          format: double
+          example: 450
+        approved_events_count:
+          type: integer
+          example: 10
+        events_count:
+          type: integer
+          example: 15
+    ErrorResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
