@@ -14,7 +14,8 @@ WORKDIR /var/www/html
 
 COPY . .
 
-RUN composer install --optimize-autoloader --no-interaction
+RUN git config --global --add safe.directory /var/www/html \
+    && composer install --optimize-autoloader --no-interaction
 
 RUN chown -R www-data:www-data storage bootstrap/cache
 
