@@ -2,6 +2,16 @@
 
 use Illuminate\Support\Str;
 
+$appEnv = env('APP_ENV', 'production');
+$runningInDocker = is_file('/.dockerenv');
+$isTestingEnvironment = $appEnv === 'testing';
+
+$testingPgHost = env('TEST_DB_HOST', env('DB_HOST', $runningInDocker ? 'db' : '127.0.0.1'));
+$testingPgPort = env('TEST_DB_PORT', env('DB_PORT', '5432'));
+$testingPgDatabase = env('TEST_DB_DATABASE', 'petroapp_test');
+$testingPgUsername = env('TEST_DB_USERNAME', env('DB_USERNAME', 'postgres'));
+$testingPgPassword = env('TEST_DB_PASSWORD', env('DB_PASSWORD', 'postgres'));
+
 return [
 
     /*
@@ -85,11 +95,11 @@ return [
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DB_URL'),
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '5432'),
-            'database' => env('DB_DATABASE', 'laravel'),
-            'username' => env('DB_USERNAME', 'root'),
-            'password' => env('DB_PASSWORD', ''),
+            'host' => $isTestingEnvironment ? $testingPgHost : env('DB_HOST', '127.0.0.1'),
+            'port' => $isTestingEnvironment ? $testingPgPort : env('DB_PORT', '5432'),
+            'database' => $isTestingEnvironment ? $testingPgDatabase : env('DB_DATABASE', 'laravel'),
+            'username' => $isTestingEnvironment ? $testingPgUsername : env('DB_USERNAME', 'root'),
+            'password' => $isTestingEnvironment ? $testingPgPassword : env('DB_PASSWORD', ''),
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
             'prefix_indexes' => true,

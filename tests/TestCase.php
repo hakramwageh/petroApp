@@ -28,6 +28,8 @@ abstract class TestCase extends BaseTestCase
     protected function runAgainstServedApplication(callable $callback): void
     {
         $port = random_int(8100, 8999);
+        $databaseConfig = $this->testDatabaseConfig();
+
         $process = new Process(
             ['php', 'artisan', 'serve', '--host=127.0.0.1', "--port={$port}"],
             base_path(),
@@ -35,12 +37,12 @@ abstract class TestCase extends BaseTestCase
                 'APP_ENV' => 'testing',
                 'APP_KEY' => env('APP_KEY'),
                 'APP_URL' => "http://127.0.0.1:{$port}",
-                'DB_CONNECTION' => env('DB_CONNECTION', 'pgsql'),
-                'DB_HOST' => env('DB_HOST', 'db'),
-                'DB_PORT' => env('DB_PORT', '5432'),
-                'DB_DATABASE' => env('DB_DATABASE', 'petroapp_test'),
-                'DB_USERNAME' => env('DB_USERNAME', 'postgres'),
-                'DB_PASSWORD' => env('DB_PASSWORD', 'postgres'),
+                'DB_CONNECTION' => config('database.default', 'pgsql'),
+                'TEST_DB_HOST' => $databaseConfig['host'],
+                'TEST_DB_PORT' => $databaseConfig['port'],
+                'TEST_DB_DATABASE' => $databaseConfig['database'],
+                'TEST_DB_USERNAME' => $databaseConfig['username'],
+                'TEST_DB_PASSWORD' => $databaseConfig['password'],
                 'CACHE_STORE' => 'array',
                 'SESSION_DRIVER' => 'array',
                 'QUEUE_CONNECTION' => 'sync',
@@ -67,18 +69,37 @@ abstract class TestCase extends BaseTestCase
 
     protected function truncateTransferEventsOutsideTransaction(): void
     {
+        $databaseConfig = $this->testDatabaseConfig();
+
         $pdo = new PDO(
             sprintf(
                 'pgsql:host=%s;port=%s;dbname=%s',
-                env('DB_HOST', 'db'),
-                env('DB_PORT', '5432'),
-                env('DB_DATABASE', 'petroapp_test'),
+                $databaseConfig['host'],
+                $databaseConfig['port'],
+                $databaseConfig['database'],
             ),
-            env('DB_USERNAME', 'postgres'),
-            env('DB_PASSWORD', 'postgres'),
+            $databaseConfig['username'],
+            $databaseConfig['password'],
         );
 
         $pdo->exec('TRUNCATE TABLE transfer_events RESTART IDENTITY');
+    }
+
+    /**
+     * @return array{host: string, port: string, database: string, username: string, password: string}
+     */
+    private function testDatabaseConfig(): array
+    {
+        /** @var array{host: string, port: string, database: string, username: string, password: string} $config */
+        $config = [
+            'host' => (string) config('database.connections.pgsql.host', '127.0.0.1'),
+            'port' => (string) config('database.connections.pgsql.port', '5432'),
+            'database' => (string) config('database.connections.pgsql.database', 'petroapp_test'),
+            'username' => (string) config('database.connections.pgsql.username', 'postgres'),
+            'password' => (string) config('database.connections.pgsql.password', 'postgres'),
+        ];
+
+        return $config;
     }
 
     private function waitForApplicationServer(Client $client): void
