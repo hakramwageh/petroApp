@@ -1,6 +1,20 @@
 #!/bin/sh
 set -eu
 
+docker_env_file=".env.docker"
+docker_env_example=".env.docker.example"
+
+if [ ! -f "$docker_env_file" ]; then
+    if [ -f "$docker_env_example" ]; then
+        cp "$docker_env_example" "$docker_env_file"
+    else
+        echo "Missing $docker_env_file and $docker_env_example"
+        exit 1
+    fi
+fi
+
+cp "$docker_env_file" .env
+
 db_host="${DB_HOST:-db}"
 db_port="${DB_PORT:-5432}"
 
