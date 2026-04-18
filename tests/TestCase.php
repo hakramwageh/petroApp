@@ -34,10 +34,15 @@ abstract class TestCase extends BaseTestCase
             ['php', 'artisan', 'serve', '--host=127.0.0.1', "--port={$port}"],
             base_path(),
             [
-                'APP_ENV' => 'testing',
+                'APP_ENV' => 'local',
                 'APP_KEY' => env('APP_KEY'),
                 'APP_URL' => "http://127.0.0.1:{$port}",
                 'DB_CONNECTION' => config('database.default', 'pgsql'),
+                'DB_HOST' => $databaseConfig['host'],
+                'DB_PORT' => $databaseConfig['port'],
+                'DB_DATABASE' => $databaseConfig['database'],
+                'DB_USERNAME' => $databaseConfig['username'],
+                'DB_PASSWORD' => $databaseConfig['password'],
                 'TEST_DB_HOST' => $databaseConfig['host'],
                 'TEST_DB_PORT' => $databaseConfig['port'],
                 'TEST_DB_DATABASE' => $databaseConfig['database'],
@@ -48,6 +53,7 @@ abstract class TestCase extends BaseTestCase
                 'QUEUE_CONNECTION' => 'sync',
                 'MAX_BATCH_SIZE' => (string) env('MAX_BATCH_SIZE', '500'),
                 'INSERT_CHUNK_SIZE' => (string) env('INSERT_CHUNK_SIZE', '100'),
+                'PHP_CLI_SERVER_WORKERS' => (string) env('PHP_CLI_SERVER_WORKERS', '4'),
             ]
         );
 
@@ -90,9 +96,15 @@ abstract class TestCase extends BaseTestCase
      */
     private function testDatabaseConfig(): array
     {
+        $runningInDocker = is_file('/.dockerenv');
+        $defaultHost = $runningInDocker ? (string) env('DB_HOST', 'db') : '127.0.0.1';
+        $configuredHost = (string) config('database.connections.pgsql.host', $defaultHost);
+
         /** @var array{host: string, port: string, database: string, username: string, password: string} $config */
         $config = [
-            'host' => (string) config('database.connections.pgsql.host', '127.0.0.1'),
+            'host' => $runningInDocker && in_array($configuredHost, ['127.0.0.1', 'localhost'], true)
+                ? (string) env('DB_HOST', 'db')
+                : $configuredHost,
             'port' => (string) config('database.connections.pgsql.port', '5432'),
             'database' => (string) config('database.connections.pgsql.database', 'petroapp_test'),
             'username' => (string) config('database.connections.pgsql.username', 'postgres'),

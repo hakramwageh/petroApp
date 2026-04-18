@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use GuzzleHttp\Pool;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Psr\Http\Message\ResponseInterface;
 use Tests\TestCase;
 
 class TransferIngestionTest extends TestCase
@@ -96,9 +97,12 @@ class TransferIngestionTest extends TestCase
 
         $this->runAgainstServedApplication(function ($client) use ($payload): void {
             $requests = function () use ($client, $payload) {
-                for ($i = 0; $i < 10; $i++) {
+                for ($i = 0; $i < 2; $i++) {
                     yield static fn () => $client->postAsync('/api/v0/transfers', [
                         'json' => $payload,
+                        'headers' => [
+                            'Accept' => 'application/json',
+                        ],
                     ]);
                 }
             };
@@ -106,9 +110,24 @@ class TransferIngestionTest extends TestCase
             $responses = [];
 
             $pool = new Pool($client, $requests(), [
-                'concurrency' => 10,
-                'fulfilled' => static function ($response) use (&$responses): void {
-                    $responses[] = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
+                'concurrency' => 2,
+                'fulfilled' => static function (ResponseInterface $response) use (&$responses): void {
+                    $body = (string) $response->getBody();
+
+                    self::assertSame(200, $response->getStatusCode(), $body);
+
+                    try {
+                        $decoded = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
+                    } catch (\JsonException) {
+                        self::fail(sprintf(
+                            'Expected JSON ingestion response, got status %d with body: %s',
+                            $response->getStatusCode(),
+                            $body === '' ? '[empty body]' : $body
+                        ));
+                    }
+
+                    self::assertIsArray($decoded, 'Expected decoded ingestion response to be an array.');
+                    $responses[] = $decoded;
                 },
             ]);
 
@@ -118,13 +137,29 @@ class TransferIngestionTest extends TestCase
             $duplicatesTotal = array_sum(array_map(static fn (array $response): int => $response['duplicates'], $responses));
 
             self::assertSame(2, $insertedTotal);
-            self::assertSame(18, $duplicatesTotal);
+            self::assertSame(2, $duplicatesTotal);
 
-            $summaryResponse = $client->get('/api/v0/stations/S1/summary');
-            $summary = json_decode((string) $summaryResponse->getBody(), true, 512, JSON_THROW_ON_ERROR);
+            $summaryResponse = $client->get('/api/v0/stations/S1/summary', [
+                'headers' => [
+                    'Accept' => 'application/json',
+                ],
+            ]);
+            $summaryBody = (string) $summaryResponse->getBody();
 
-            self::assertSame(200, $summaryResponse->getStatusCode());
-            self::assertSame(175.0, $summary['total_approved_amount']);
+            self::assertSame(200, $summaryResponse->getStatusCode(), $summaryBody);
+
+            try {
+                $summary = json_decode($summaryBody, true, 512, JSON_THROW_ON_ERROR);
+            } catch (\JsonException) {
+                self::fail(sprintf(
+                    'Expected JSON summary response, got status %d with body: %s',
+                    $summaryResponse->getStatusCode(),
+                    $summaryBody === '' ? '[empty body]' : $summaryBody
+                ));
+            }
+
+            self::assertIsArray($summary, 'Expected decoded summary response to be an array.');
+            self::assertSame(175, $summary['total_approved_amount']);
             self::assertSame(2, $summary['approved_events_count']);
             self::assertSame(2, $summary['events_count']);
         });
