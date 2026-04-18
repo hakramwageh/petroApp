@@ -28,7 +28,7 @@ The API will be available at `http://localhost:8000/api/v0`.
 
 ## Run locally without Docker
 
-- must have postgres running before run test locally
+- must have postgres running before run it locally
   
 ```bash
 make local-run
