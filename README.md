@@ -103,6 +103,10 @@ curl http://localhost:8000/api/v0/stations/S1/summary
 }
 ```
 
+## OpenAPI spec
+
+The project also includes an OpenAPI 3.1 description in [openapi.yaml](/Users/Hakram_1/Documents/haitham/petroApp/petroApp/openapi.yaml). It documents the `/transfers` and `/stations/{station_id}/summary` endpoints, request payloads, and response schemas for local review or import into API tooling.
+
 ## Assumptions and design decisions
 
 
