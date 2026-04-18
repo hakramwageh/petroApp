@@ -51,10 +51,21 @@ class StationService
         ]);
 
         if ($invalidCount > 0) {
+            // Log invalid event ids as a string separated by comma
+            $invalidEvents = implode(',', array_map(
+                fn ($error) => sprintf(
+                    'index-%d:event_id-%s',
+                    $error['index'],
+                    $rawEvents[$error['index']]['event_id'] ?? ''
+                ),
+                $errors
+            ));
+
             Log::warning('transfer.ingest.invalid_events', [
                 'invalid_count' => $invalidCount,
-                'first_error' => $errors[0] ?? null,
+                'invalid_events' => $invalidEvents,
             ]);
+
         }
 
         return array_filter([
@@ -129,9 +140,6 @@ class StationService
         ];
     }
 
-    /**
-     * @param  mixed  $event
-     */
     private function makeEventValidator(mixed $event): LaravelValidator
     {
         return Validator::make(is_array($event) ? $event : [], [
