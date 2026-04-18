@@ -16,16 +16,6 @@ Senior backend take-home assignment implemented with Laravel 11 and PostgreSQL 1
 - Docker Compose
 - GNU Make
 
-## Run locally without Docker
-
-```bash
-make local-run
-```
-
-This installs dependencies, runs migrations, and starts the API locally without Docker.
-
-The API will be available at `http://localhost:8000/api/v0`.
-
 ## Run with Docker
 
 ```bash
@@ -36,15 +26,20 @@ This starts the Docker stack, waits for PostgreSQL, runs migrations, and serves 
 
 The API will be available at `http://localhost:8000/api/v0`.
 
-## Run tests
-
-Local:
+## Run locally without Docker
 
 - must have postgres running before run test locally
-
+  
 ```bash
-make local-test
+make local-run
 ```
+
+This installs dependencies, runs migrations, and starts the API locally without Docker.
+
+The API will be available at `http://localhost:8000/api/v0`.
+
+
+## Run tests
 
 Docker:
 
@@ -53,6 +48,14 @@ make docker-test
 ```
 
 The Docker setup creates both `petroapp` and `petroapp_test` databases. PHPUnit is configured to use `petroapp_test`.
+
+Local:
+
+- must have postgres running before run test locally
+
+```bash
+make local-test
+```
 
 ## API examples
 
