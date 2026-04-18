@@ -175,3 +175,7 @@ Example partial acceptance response:
 5. `make docker-test`
 6. Confirm the concurrent ingestion test passes without double inserts.
 7. Confirm `GET /api/v0/stations/UNKNOWN/summary` returns `404`.
+
+---
+
+**FYI:** this project was implemented with the help of AI coding agents after the solution plan had been reviewed and refined by me to ensure it matched the intended requirements. I then reviewed, tested, and validated the implementation to make sure the final result behaves as expected.
