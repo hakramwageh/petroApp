@@ -5,7 +5,7 @@ info:
   description: |
     API for ingesting transfer events idempotently and retrieving station reconciliation summaries.
 servers:
-  - url: http://localhost/api/v0
+  - url: http://localhost:8000/api/v0
 paths:
   /transfers:
     post:

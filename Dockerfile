@@ -18,7 +18,8 @@ RUN git config --global --add safe.directory /var/www/html \
     && composer install --optimize-autoloader --no-interaction
 
 RUN chown -R www-data:www-data storage bootstrap/cache
+RUN chmod +x docker/entrypoint.sh
 
 EXPOSE 8000
 
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+ENTRYPOINT ["./docker/entrypoint.sh"]

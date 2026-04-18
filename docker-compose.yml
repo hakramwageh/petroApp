@@ -46,32 +46,5 @@ services:
       timeout: 5s
       retries: 10
 
-  migrate:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: petroapp-migrate
-    working_dir: /var/www/html
-    environment:
-      APP_ENV: local
-      APP_DEBUG: "true"
-      APP_URL: http://localhost:8000
-      DB_CONNECTION: pgsql
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_DATABASE: petroapp
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
-      CACHE_STORE: array
-      SESSION_DRIVER: array
-      QUEUE_CONNECTION: sync
-      MAX_BATCH_SIZE: 500
-      INSERT_CHUNK_SIZE: 100
-    depends_on:
-      db:
-        condition: service_healthy
-    command: php artisan migrate --force
-    restart: "no"
-
 volumes:
   postgres-data:

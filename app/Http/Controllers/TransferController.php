@@ -4,14 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\BatchSizeExceededException;
 use App\Http\Resources\TransferIngestionResource;
-use App\Services\TransferIngestionService;
+use App\Services\StationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class TransferController extends Controller
 {
-    public function ingest(Request $request, TransferIngestionService $service): TransferIngestionResource|JsonResponse
+    public function ingest(Request $request, StationService $service): TransferIngestionResource|JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'events' => ['required', 'array'],
